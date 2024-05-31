@@ -70,6 +70,9 @@ float ch4_ppm = 0;
 float co2_ppm = 0;
 uint8_t dht_temp = 0;
 uint8_t dht_hum = 0;
+uint8_t Lim_s1=0;
+uint8_t Lim_s2=0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +89,27 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
+
+void EXTI10_15_IRQHandler(void)   // <----- The ISR Function We're Looking For!
+{
+	if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_10)==1){
+		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+	}
+	if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11)==1){
+			HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+		}
+}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == GPIO_PIN_10) // If The INT Source Is EXTI Line9 (A9 Pin)
+    {
+    Lim_s1 = 1; // Toggle The Output (LED) Pin
+    }
+    if(GPIO_Pin == GPIO_PIN_11) // If The INT Source Is EXTI Line9 (A9 Pin)
+    {
+    Lim_s2 = 1; // Toggle The Output (LED) Pin
+    }
+}
 
 /* USER CODE END PFP */
 
@@ -107,7 +131,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+																																																																													HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -176,13 +200,19 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if (readDHT11(&DHT11)){
+
 	  dht_temp=DHT11.temperature_I;
 	  dht_hum=DHT11.humidty_I;
+	  update_tempHum(&mq135, dht_temp, dht_hum);
+	  update_tempHum(&mq137, dht_temp, dht_hum);
+	  update_tempHum(&mq4, dht_temp, dht_hum);
 	  }
-
-	  nh3_ppm = getNH3(&mq137);
+	  //corrected : dht11 den gelen sıcaklık ve nem verilerine göre düzeltilmiş youğunluk.
+	  //dht11 mevcut değilse gerekli sıcaklık ve nem değerleri elle atanmalı ve sabit kalmalı
+	  //sıcaklık ve nem değerleri olmaksızın hesap yapılmak isteniyorsa getcorrected..()  yeribe get..() fonksiyonları kullanılmalı
+	  nh3_ppm = getCorrectedNH3(&mq137);
 	  co2_ppm = getCorrectedCO2(&mq135);
-	  ch4_ppm = getCH4(&mq4);
+	  ch4_ppm = getCorrectedCH4(&mq4);
 	  TEMP =  BMP180_GetTemp();
 	  PRESS = BMP180_GetPress();
 	  HAL_Delay(100);
@@ -858,6 +888,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF10_TIM4;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC10 PC11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
