@@ -71,15 +71,6 @@ float getPPM(MQ*mq,float m,float b) {
     return ppm;
 }
 
-float getPPM_a(MQ*mq,float m,float b) {
-    float ratio = getResistance(mq)*3.6 / (mq->R0);
-    float ppm_log = (log10(ratio) - b) / m;
-    float ppm = pow(10, ppm_log);
-    if (ppm < 0) {
-        ppm = 0;
-    }
-    return ppm;
-}
 
 float getCorrectedPPM(MQ*mq,float m,float b) {
     float ratio = getCorrectedResistance(mq) / mq->R0;
@@ -100,13 +91,18 @@ float getCO2(MQ*mq) {
     return getPPM(mq,110.47, -2.862) + ATMOCO2;
 }
 
+float getCorrectedNH3(MQ*mq) {
+    return getCorrectedPPM(mq,-0.2640,-0.2307);
+}
+
 float getNH3(MQ*mq) {
     return getPPM(mq,-0.2640,-0.2307);
 }
 
-float getNH3_a(MQ*mq) {
-    return getPPM_a(mq,-0.2784,0.4460);
+float getCorrectedCH4(MQ*mq) {
+    return getCorrectedPPM(mq,-0.600553,0.801659);
 }
+
 float getCH4(MQ*mq) {
-    return getPPM_a(mq,-0.600553,0.801659);
+    return getPPM(mq,-0.600553,0.801659);
 }

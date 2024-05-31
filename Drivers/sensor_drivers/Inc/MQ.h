@@ -4,10 +4,10 @@
 #include "stm32f3xx_hal.h"
 #include <math.h>
 /// Resistor on Sensor in kΩ
-#define RL 80
+#define RL 10
 
 /// Voltage on Sensor in V
-#define VIn 5
+#define VIn 3.3
 
 /// Board analog Input Resolution
 /// Default: 2^12
@@ -23,7 +23,7 @@
 #define CorrD 1.37530864197
 #define CorrE 0.0019230769
 
-#define Vstep (float)VIn/(4095-1)
+#define Vstep (float)VIn/(4096-1)
 
 
 
@@ -56,7 +56,6 @@ float getCorrectedResistance(MQ*mq);
 /// Calculates ppm on a exponential curve
 /// (Different Gases have different curves)
 float getPPM(MQ*mq, float m, float b);
-float getPPM_a(MQ*mq,float m,float b);
 float getCorrectedPPM(MQ*mq, float m, float b);
 
 /// Gets ppm of ammonia in Air (NH3)
@@ -68,7 +67,7 @@ float getCO2(MQ*mq);
 float getCorrectedCO2(MQ*mq);
 
 float getCH4(MQ*mq);
-
+float getCorrectedCH4(MQ*mq);
 
 #endif
 
